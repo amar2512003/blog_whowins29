@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhoWins2029 — Reading India's Next Mandate</title>
+<meta name="description" content="An independent data bulletin forecasting the 2029 Lok Sabha election from three historical baselines, read against the current political and economic landscape.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗳️</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a href="#top" class="brand">
+      <span class="mark">W29</span>
+      <span>WhoWins2029 <small>Election Bulletin</small></span>
+    </a>
+    <nav class="top-nav">
+      <a href="#method">Method</a>
+      <a href="#predictions">Predictions</a>
+      <a href="#turnout">Turnout</a>
+      <a href="#landscape">Landscape</a>
+      <a href="#debate">Debate</a>
+      <a href="#forum">Discussion</a>
+    </nav>
+  </div>
+</header>
+
+<div class="ticker" aria-label="Key figures ticker">
+  <div class="ticker-track" id="tickerTrack">
+    <!-- duplicated via JS for seamless loop -->
+    <span class="ticker-item"><span class="dot">●</span> 543 Lok Sabha seats up for vote in <b>2029</b></span>
+    <span class="ticker-item">West Bengal 2026 — <b>BJP</b> ends 15-year TMC rule</span>
+    <span class="ticker-item">Kerala 2026 — <b>Congress-led UDF</b> ends decade of LDF rule</span>
+    <span class="ticker-item">FY2025–26 GDP growth ≈ <b>6.5%</b> (IMF)</span>
+    <span class="ticker-item">Per-capita income crosses <b>$3,000</b> for the first time</span>
+    <span class="ticker-item">3 baseline models: <b>2014 → 2019 → 2024</b></span>
+  </div>
+</div>
+
+<div class="layout" id="top">
+  <aside class="toc">
+    <div class="toc-title">In this bulletin</div>
+    <ol>
+      <li><a href="#hero"><span class="num">I</span>Masthead</a></li>
+      <li><a href="#method"><span class="num">II</span>The Model</a></li>
+      <li><a href="#predictions"><span class="num">III</span>Three Forecasts</a></li>
+      <li><a href="#turnout"><span class="num">IV</span>Voter Turnout</a></li>
+      <li><a href="#landscape"><span class="num">V</span>Current Landscape</a></li>
+      <li><a href="#debate"><span class="num">VI</span>The Vote-Share Debate</a></li>
+      <li><a href="#forum"><span class="num">VII</span>Discussion</a></li>
+    </ol>
+  </aside>
+
+  <main>
+
+    <section id="hero" class="hero">
+      <div class="eyebrow">Vol. 1 — Issue 01 — Independent Forecast</div>
+      <h1>Who wins the 2029 Lok Sabha election?</h1>
+      <p class="lede">A random-forest model, trained on constituency-level results and demographic features, projects the next general election three separate ways — once from each of the last three mandates. This bulletin lays out what it found, and reads it against the state elections and economic data of 2026.</p>
+      <div class="hero-meta">
+        <div><div class="k">Model</div><div class="v">Random Forest</div></div>
+        <div><div class="k">Built in</div><div class="v">R</div></div>
+        <div><div class="k">Baselines</div><div class="v">2014 · 2019 · 2024</div></div>
+        <div><div class="k">Target</div><div class="v">2029 Lok Sabha</div></div>
+      </div>
+    </section>
+
+    <section id="method">
+      <div class="eyebrow">II — Method</div>
+      <h2>How the forecast is built</h2>
+      <div class="prose">
+        <p>The model treats each Lok Sabha election as a data point about a constituency: who held it, by what margin, and what the surrounding demographic and turnout features looked like. A random forest — an ensemble of decision trees trained on that history — is then asked to project forward one election cycle at a time.</p>
+        <p>Because a single baseline can only tell you so much, this bulletin runs the projection three times, from three different starting points, so the three views can be read against each other rather than taken as one verdict.</p>
+      </div>
+      <div class="method-grid">
+        <div class="method-card">
+          <span class="tag">Baseline A</span>
+          <h4>2014 → 2019</h4>
+          <p>Trained on the 2014 result, used to reconstruct the 2019 outcome as a check on the model's own accuracy.</p>
+        </div>
+        <div class="method-card">
+          <span class="tag">Baseline B</span>
+          <h4>2019 → 2024</h4>
+          <p>Trained on 2019, projecting the 2024 result — a second accuracy check against a known, already-decided election.</p>
+        </div>
+        <div class="method-card">
+          <span class="tag">Baseline C</span>
+          <h4>2024 → 2029</h4>
+          <p>Trained on the most recent result available, this is the actual forward-looking forecast for the next general election.</p>
+        </div>
+      </div>
+      <div class="prose">
+        <p><strong>Data:</strong> constituency-level feature table (<code>election_data_features_filtered.csv</code>), state boundaries (<code>india_states.geojson</code>), and a serialized random forest fit (<code>model_rf_party.rds</code>), rendered through a Shiny interface with a base-year slider.</p>
+      </div>
+    </section>
+
+    <section id="predictions">
+      <div class="eyebrow">III — Findings</div>
+      <h2>Three forecasts, one target</h2>
+      <div class="prose">
+        <p>Slide between the three baselines below. The first two are back-tests against elections that already happened; the third — 2024 → 2029 — is the model's actual forward projection.</p>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Prediction baseline year">
+        <button class="tab-btn active" data-tab="p2019" role="tab" aria-selected="true"><span class="yr">2019</span>from 2014 result</button>
+        <button class="tab-btn" data-tab="p2024" role="tab" aria-selected="false"><span class="yr">2024</span>from 2019 result</button>
+        <button class="tab-btn" data-tab="p2029" role="tab" aria-selected="false"><span class="yr">2029</span>from 2024 result</button>
+      </div>
+      <div class="tab-panels">
+        <div class="tab-panel active" id="p2019">
+          <img src="images/predicted-2019.png" alt="Map of predicted 2019 Lok Sabha state winners, generated from a model trained on the 2014 election result.">
+          <div class="tab-caption">
+            <p>Back-test: model trained only on 2014 data, asked to reconstruct the already-known 2019 map.</p>
+            <span class="src">whowins2029.vercel.app</span>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--data-orange)"></i>BJP-predicted state</span>
+            <span><i style="background:var(--data-blue)"></i>INC-predicted state</span>
+            <span><i style="background:#999"></i>Other / no clear majority</span>
+          </div>
+        </div>
+        <div class="tab-panel" id="p2024">
+          <img src="images/predicted-2024.png" alt="Map of predicted 2024 Lok Sabha state winners, generated from a model trained on the 2019 election result.">
+          <div class="tab-caption">
+            <p>Back-test: model trained only on 2019 data, asked to reconstruct the already-known 2024 map.</p>
+            <span class="src">whowins2029.vercel.app</span>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--data-orange)"></i>BJP-predicted state</span>
+            <span><i style="background:var(--data-blue)"></i>INC-predicted state</span>
+            <span><i style="background:#999"></i>Other / no clear majority</span>
+          </div>
+        </div>
+        <div class="tab-panel" id="p2029">
+          <img src="images/predicted-2029.png" alt="Map of predicted 2029 Lok Sabha state winners, generated from a model trained on the 2024 election result.">
+          <div class="tab-caption">
+            <p><strong>The forecast:</strong> model trained on the 2024 result, projecting forward to the still-undecided 2029 election.</p>
+            <span class="src">whowins2029.vercel.app</span>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--data-orange)"></i>BJP-predicted state</span>
+            <span><i style="background:var(--data-blue)"></i>INC-predicted state</span>
+            <span><i style="background:#999"></i>Other / no clear majority</span>
+          </div>
+        </div>
+      </div>
+      <p class="caveat">A model trained on past Lok Sabha results carries forward whatever patterns were true of the past — it doesn't know about a candidate who hasn't been named yet, an alliance that hasn't been struck yet, or a state election that happened after its training data ends. Treat the 2029 panel as one structured hypothesis, not a prediction of record.</p>
+    </section>
+
+    <section id="turnout">
+      <div class="eyebrow">IV — Supporting Data</div>
+      <h2>Voter turnout by year</h2>
+      <div class="prose">
+        <p>Turnout is one of the features the model conditions on. Below is the year-wise average drawn from the project's feature table.</p>
+      </div>
+      <div class="chart-card">
+        <canvas id="turnoutChart" height="140"></canvas>
+      </div>
+      <div class="data-note">Chart re-rendered from election_data_features_filtered.csv — swap the arrays at the top of script.js with your exact column values if they differ from this sample.</div>
+    </section>
+
+    <section id="landscape">
+      <div class="eyebrow">V — Context</div>
+      <h2>The current political landscape</h2>
+      <div class="prose">
+        <p>Two state elections in 2026 are the most recent real signals available, well after the model's 2024 training cutoff. Neither settles who wins a national election in 2029 — state and general elections in India have historically diverged — but both are part of the picture.</p>
+      </div>
+
+      <div class="landscape-grid">
+        <div class="landscape-card" style="--result-color: var(--data-orange)">
+          <div class="state">West Bengal · Assembly · 2026</div>
+          <h4>BJP ends 15 years of TMC rule</h4>
+          <p>The BJP won a landslide victory in the 2026 West Bengal assembly election, defeating the incumbent All India Trinamool Congress led by Mamata Banerjee and becoming the first right-wing party to govern the state. Turnout was a historic near-94%, the highest ever recorded for a general or state legislative election in India.</p>
+          <p class="cite"><a href="https://en.wikipedia.org/wiki/2026_West_Bengal_Legislative_Assembly_election" target="_blank" rel="noopener">Source: Wikipedia, 2026 West Bengal Legislative Assembly election</a></p>
+        </div>
+        <div class="landscape-card" style="--result-color: var(--data-blue)">
+          <div class="state">Kerala · Assembly · 2026</div>
+          <h4>Congress-led UDF ends a decade of LDF rule</h4>
+          <p>The Congress-led United Democratic Front swept the 2026 Kerala assembly election, ending ten years of Left Democratic Front government under Pinarayi Vijayan. It was the alliance's strongest mandate since 1977, and left Kerala as the only major state where a communist-led front had governed — a run that has now ended.</p>
+          <p class="cite"><a href="https://en.wikipedia.org/wiki/2026_Kerala_Legislative_Assembly_election" target="_blank" rel="noopener">Source: Wikipedia, 2026 Kerala Legislative Assembly election</a></p>
+        </div>
+      </div>
+
+      <h3>The economic backdrop</h3>
+      <p class="prose">India entered the second half of the decade as the fastest-growing major economy in the world, though still comparatively poor on a per-person basis — a combination that shapes campaign messaging on both sides of the aisle.</p>
+      <div class="econ-strip">
+        <div class="econ-cell"><div class="big">≈6.5%</div><div class="lbl">GDP growth, FY2025–26 (IMF)</div></div>
+        <div class="econ-cell"><div class="big">$3,000+</div><div class="lbl">Per-capita income crossed this threshold in FY2025–26</div></div>
+        <div class="econ-cell"><div class="big">6th</div><div class="lbl">India's rank by nominal GDP, April 2026 IMF outlook</div></div>
+      </div>
+      <p class="cite" style="font-size:0.78rem; color: var(--text-faint); margin-top:10px;">Sources: <a href="https://www.worldometers.info/gdp/india-gdp/" target="_blank" rel="noopener">Worldometer / IMF WEO</a>, <a href="https://en.wikipedia.org/wiki/Economy_of_India" target="_blank" rel="noopener">Wikipedia, Economy of India</a></p>
+
+      <p class="caveat">Reading these together: a state sweep for one national party and a state sweep for the other, in the same election season, is itself a data point worth sitting with — it argues against assuming either result travels cleanly to a 543-seat national contest three years out.</p>
+    </section>
+
+    <section id="debate">
+      <div class="eyebrow">VI — Debate</div>
+      <h2>Does the BJP's vote share grow, or hit a ceiling?</h2>
+      <div class="prose">
+        <p>Set aside the model for a moment — this is the question analysts, pollsters, and the party's own strategists are actually arguing about ahead of 2029. The historical trend line and the 2026 state results can be read two ways, and the honest answer is that both readings have real evidence behind them.</p>
+      </div>
+
+      <div class="econ-strip" style="margin-bottom: 32px;">
+        <div class="econ-cell"><div class="big">31.3%</div><div class="lbl">BJP vote share, 2014 — 282 seats</div></div>
+        <div class="econ-cell"><div class="big">37.4%</div><div class="lbl">BJP vote share, 2019 — 303 seats</div></div>
+        <div class="econ-cell"><div class="big">36.5%</div><div class="lbl">BJP vote share, 2024 — 240 seats, NDA ~43%</div></div>
+      </div>
+
+      <div class="landscape-grid">
+        <div class="landscape-card" style="--result-color: var(--data-orange)">
+          <div class="state">Case for a bigger 2029 mandate</div>
+          <h4>Expansion into new territory</h4>
+          <p>The BJP has spent this decade building a presence in states where it was historically weak, and the 2026 Bengal result — after a MOTN tracking survey had already shown the party consolidating there — reads as that strategy paying off.</p>
+          <p>Historically the party has also been efficient at turning regional vote-share gains into seats: it went from 282 seats on 31.3% of the vote in 2014 to 303 seats on 37.4% in 2019, a pattern first-past-the-post rewards when a party sweeps its strongest states.</p>
+          <p>Analysts also point to the scale of direct-benefit welfare programs — free food grain, LPG and housing subsidies reaching hundreds of millions of households — as a stabilizing floor under the party's national vote share, independent of any single election cycle's news.</p>
+          <p class="cite">Sources: <a href="https://www.indiatoday.in/elections/story/mood-of-the-nation-2026-live-updates-motn-survey-modi-govt-yogi-adityanath-rahul-gandhi-bjp-congress-bengal-2859858-2026-01-29" target="_blank" rel="noopener">India Today–CVoter Mood of the Nation, Jan 2026</a>, <a href="https://theprint.in/opinion/bjps-west-bengal-win-assembly-polls/2922401/" target="_blank" rel="noopener">ThePrint, opinion</a>, <a href="https://www.hindustantimes.com/india-news/from-2014-2024-282-303-240-charting-shift-in-bjp-s-tally-101717616309825.html" target="_blank" rel="noopener">Hindustan Times, seat/vote-share chart</a>, <a href="https://openthemagazine.com/politics/with-modi-at-helm-bjps-plans-for-2029-lok-sabha-election-are-falling-in-place" target="_blank" rel="noopener">Open Magazine, opinion</a></p>
+        </div>
+        <div class="landscape-card" style="--result-color: var(--data-blue)">
+          <div class="state">Case for a tighter race</div>
+          <h4>A ceiling, not a floor</h4>
+          <p>2024 is the counter-example: BJP's own vote share actually slipped to about 36.5% and its seat count fell from 303 to 240 once the opposition INDIA bloc largely avoided splitting the anti-BJP vote. By most tallies the NDA's national lead over INDIA was only a few points — enough to matter, not enough for a landslide.</p>
+          <p>CPI(M)'s own post-election review of 2024 ties BJP losses in specific belts to rural distress, youth unemployment and inflation — pressures that don't disappear on their own and that opposition strategists are explicitly trying to keep alive into 2029.</p>
+          <p>The core arithmetic risk for the BJP: if a unified opposition holds even a 2–3 point swing against the party in Uttar Pradesh or Bihar, the largest vote-rich states, that alone can cancel out gains made elsewhere.</p>
+          <p class="cite">Sources: <a href="https://en.wikipedia.org/wiki/Results_of_the_2024_Indian_general_election" target="_blank" rel="noopener">Wikipedia, 2024 results</a>, <a href="https://www.indiavotes.com/" target="_blank" rel="noopener">IndiaVotes.com</a>, <a href="https://cpim.org/review-of-the-18th-lok-sabha-elections-june-2024-cc-report/" target="_blank" rel="noopener">CPI(M) central committee review</a>, <a href="https://theprint.in/opinion/2029-elections-uttar-pradesh-bjp-congress/2970470/" target="_blank" rel="noopener">ThePrint, opinion</a></p>
+        </div>
+      </div>
+
+      <p class="caveat">Neither case is a prediction — they're the two ends of the range serious analysts are actually debating. A genuinely useful forecast holds both in mind at once, which is part of why this bulletin runs three separate baselines rather than presenting one number.</p>
+    </section>
+
+    <section id="forum">
+      <div class="eyebrow">VII — Open Floor</div>
+      <div class="forum-intro">
+        <h2>What do you think happens in 2029?</h2>
+        <span class="forum-count" id="forumCount">0 entries</span>
+      </div>
+      <div class="prose">
+        <p>Leave your own read on the forecast — under your name, a handle, or anonymously. Be specific about what you'd weigh differently.</p>
+      </div>
+
+      <form class="forum-form" id="forumForm">
+        <div class="form-row">
+          <div class="form-field" style="flex:2">
+            <label for="cName">Name (optional)</label>
+            <input type="text" id="cName" maxlength="60" placeholder="Leave blank to post as Anonymous">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="cBody">Your view</label>
+            <textarea id="cBody" rows="4" maxlength="1000" placeholder="What would you factor into the 2029 forecast?" required></textarea>
+          </div>
+        </div>
+        <div class="form-row" style="align-items:center; justify-content:space-between;">
+          <div class="anon-row">
+            <input type="checkbox" id="cAnon">
+            <label for="cAnon">Post anonymously even if I filled in a name</label>
+          </div>
+          <button type="submit" class="btn">Post entry</button>
+        </div>
+        <div class="form-status" id="formStatus"></div>
+      </form>
+
+      <div id="commentList"></div>
+
+      <div class="storage-note">
+        These entries are stored in your browser only (localStorage), so this board is private to your own device — it will not show other visitors' comments and won't sync across browsers. See the README for a short guide on wiring this form up to a free shared backend (e.g. Supabase) so entries are visible to everyone.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="wrap rail-align" style="max-width: var(--max); margin: 0 auto;">
+    <p>WhoWins2029 is an independent, model-based forecast — not affiliated with any party, pollster, or the Election Commission of India. Built in R · Shiny · Leaflet.</p>
+    <p><a href="https://amarsinha-5350.vercel.app" target="_blank" rel="noopener">Amar Sinha </a> · <a href="https://github.com/amar2512003/WhoWins2029">Github</a></p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
