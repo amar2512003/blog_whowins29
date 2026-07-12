@@ -69,30 +69,45 @@
 
     <section id="method">
       <div class="eyebrow">II — Method</div>
-      <h2>How the forecast is built</h2>
+      <h2>How the forecast is actually built</h2>
       <div class="prose">
-        <p>The model treats each Lok Sabha election as a data point about a constituency: who held it, by what margin, and what the surrounding demographic and turnout features looked like. A random forest — an ensemble of decision trees trained on that history — is then asked to project forward one election cycle at a time.</p>
-        <p>Because a single baseline can only tell you so much, this bulletin runs the projection three times, from three different starting points, so the three views can be read against each other rather than taken as one verdict.</p>
+        <p>There's one important detail worth being precise about: the app doesn't train three separate models. There's a single pre-fitted random forest classifier (<code>model_rf_party.rds</code>) that predicts a constituency's winning party from a fixed set of features. What changes when you move the base-year slider is which year's rows get fed into that same model, and how they're nudged first.</p>
+        <p>Concretely, each row in <code>election_data_features_filtered.csv</code> describes one constituency in one election year: its state, candidate, party, vote share, vote margin, a swing-votes measure, a turnout-impact measure, and whether the seat had an incumbent.</p>
       </div>
+
+      <h3>What happens when you pick a base year</h3>
+      <div class="prose">
+        <ol>
+          <li><strong>Filter</strong> to every constituency row for the selected base year (2014, 2019, or 2024).</li>
+          <li><strong>Perturb two features</strong> — small random noise is added to <code>swing_votes</code> and <code>turnout_impact</code>, standing in for the shift that normally happens between one election and the next. The randomness is seeded to the chosen year, so the same base year always produces the same nudge rather than a new one every time you move the slider.</li>
+          <li><strong>Reset incumbency</strong> — <code>incumbent</code> is forced to 0 for every seat. In effect, the model is asked to predict each constituency as if it were open, with no sitting-MP advantage carried forward.</li>
+          <li><strong>Classify</strong> — each nudged row is run through the same trained random forest to get a predicted party.</li>
+          <li><strong>Roll up to constituency</strong> — within each constituency, whichever predicted party has the higher average vote share is taken as that constituency's projected winner.</li>
+          <li><strong>Roll up to state</strong> — whichever party wins more constituencies inside a state is the color shown for that state on the map.</li>
+          <li><strong>Label forward</strong> — the result is titled <code>base year + 5</code>, so feeding in 2024 produces a map titled "2029 Lok Sabha."</li>
+        </ol>
+      </div>
+
       <div class="method-grid">
         <div class="method-card">
-          <span class="tag">Baseline A</span>
-          <h4>2014 → 2019</h4>
-          <p>Trained on the 2014 result, used to reconstruct the 2019 outcome as a check on the model's own accuracy.</p>
+          <span class="tag">Base year 2014</span>
+          <h4>→ labeled 2019</h4>
+          <p>2014's feature rows, nudged and re-classified, compared against the real 2019 result as a sanity check on the approach.</p>
         </div>
         <div class="method-card">
-          <span class="tag">Baseline B</span>
-          <h4>2019 → 2024</h4>
-          <p>Trained on 2019, projecting the 2024 result — a second accuracy check against a known, already-decided election.</p>
+          <span class="tag">Base year 2019</span>
+          <h4>→ labeled 2024</h4>
+          <p>2019's feature rows, nudged and re-classified, compared against the real 2024 result — a second sanity check.</p>
         </div>
         <div class="method-card">
-          <span class="tag">Baseline C</span>
-          <h4>2024 → 2029</h4>
-          <p>Trained on the most recent result available, this is the actual forward-looking forecast for the next general election.</p>
+          <span class="tag">Base year 2024</span>
+          <h4>→ labeled 2029</h4>
+          <p>The only one of the three with no real result to check against yet — this is the actual forward-looking output.</p>
         </div>
       </div>
+
       <div class="prose">
-        <p><strong>Data:</strong> constituency-level feature table (<code>election_data_features_filtered.csv</code>), state boundaries (<code>india_states.geojson</code>), and a serialized random forest fit (<code>model_rf_party.rds</code>), rendered through a Shiny interface with a base-year slider.</p>
+        <p><strong>Data and tooling:</strong> constituency-level feature table (<code>election_data_features_filtered.csv</code>), state boundaries (<code>india_states.geojson</code>), and the serialized random forest (<code>model_rf_party.rds</code>), rendered through a Shiny app (<code>ggplot2</code> + <code>plotly</code> for the interactive choropleth, party logos overlaid via <code>base64enc</code>).</p>
       </div>
     </section>
 
@@ -112,7 +127,7 @@
         <div class="tab-panel active" id="p2019">
           <img src="images/predicted-2019.png" alt="Map of predicted 2019 Lok Sabha state winners, generated from a model trained on the 2014 election result.">
           <div class="tab-caption">
-            <p>Back-test: model trained only on 2014 data, asked to reconstruct the already-known 2019 map.</p>
+            <p>Sanity check: 2014's feature rows, nudged forward and re-classified by the same model, reconstructing the already-known 2019 map.</p>
             <span class="src">whowins2029.vercel.app</span>
           </div>
           <div class="legend">
@@ -124,7 +139,7 @@
         <div class="tab-panel" id="p2024">
           <img src="images/predicted-2024.png" alt="Map of predicted 2024 Lok Sabha state winners, generated from a model trained on the 2019 election result.">
           <div class="tab-caption">
-            <p>Back-test: model trained only on 2019 data, asked to reconstruct the already-known 2024 map.</p>
+            <p>Sanity check: 2019's feature rows, nudged forward and re-classified by the same model, reconstructing the already-known 2024 map.</p>
             <span class="src">whowins2029.vercel.app</span>
           </div>
           <div class="legend">
@@ -136,7 +151,7 @@
         <div class="tab-panel" id="p2029">
           <img src="images/predicted-2029.png" alt="Map of predicted 2029 Lok Sabha state winners, generated from a model trained on the 2024 election result.">
           <div class="tab-caption">
-            <p><strong>The forecast:</strong> model trained on the 2024 result, projecting forward to the still-undecided 2029 election.</p>
+            <p><strong>The forecast:</strong> 2024's feature rows, nudged forward and re-classified by the same model, projecting a still-undecided 2029 map.</p>
             <span class="src">whowins2029.vercel.app</span>
           </div>
           <div class="legend">
@@ -146,7 +161,7 @@
           </div>
         </div>
       </div>
-      <p class="caveat">A model trained on past Lok Sabha results carries forward whatever patterns were true of the past — it doesn't know about a candidate who hasn't been named yet, an alliance that hasn't been struck yet, or a state election that happened after its training data ends. Treat the 2029 panel as one structured hypothesis, not a prediction of record.</p>
+      <p class="caveat">Worth being precise about the mechanism: "projecting forward" here means taking a past year's constituency features, adding a small random nudge to two of them, wiping incumbency status to zero, and re-running the same classifier — not incorporating any genuinely new information about 2029 (new candidates, new alliances, or the 2026 state elections above, which postdate this dataset). Treat the 2029 panel as one structured hypothesis under that specific set of assumptions, not a prediction of record.</p>
     </section>
 
     <section id="turnout">
@@ -266,7 +281,7 @@
       <div id="commentList"></div>
 
       <div class="storage-note">
-        These entries are stored in your browser only (localStorage), so this board is private to your own device — it will not show other visitors' comments and won't sync across browsers. See the README for a short guide on wiring this form up to a free shared backend (e.g. Supabase) so entries are visible to everyone.
+        Backed by a small Postgres database (Supabase) so every visitor sees the same discussion. Until the site owner finishes the one-time setup in script.js, new posts are only visible on your own device.
       </div>
     </section>
 
@@ -276,7 +291,7 @@
 <footer>
   <div class="wrap rail-align" style="max-width: var(--max); margin: 0 auto;">
     <p>WhoWins2029 is an independent, model-based forecast — not affiliated with any party, pollster, or the Election Commission of India. Built in R · Shiny · Leaflet.</p>
-    <p><a href="https://amarsinha-5350.vercel.app" target="_blank" rel="noopener">Amar Sinha </a> · <a href="https://github.com/amar2512003/WhoWins2029">Github</a></p>
+    <p><a href="https://amarsinha-5350.vercel.app" target="_blank" rel="noopener">Portfolio</a> · <a href="mailto:sinhaamar178@gmail.com">sinhaamar178@gmail.com</a></p>
   </div>
 </footer>
 
