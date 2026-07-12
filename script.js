@@ -121,20 +121,59 @@ function initTurnoutChart(){
   });
 }
 
-/* ---------------------------------- Forum (localStorage) ------------------ */
-const FORUM_KEY = 'whowins2029_forum_entries';
+/* ---------------------------------- Forum (Supabase backend) --------------
+   Real shared storage: a Postgres table on Supabase's free tier, read and
+   written over its REST API. One-time setup (~2 minutes, no credit card):
+
+     1. Create a free project at https://supabase.com
+     2. Open SQL Editor → New query → paste and run:
+
+          create table comments (
+            id uuid primary key default gen_random_uuid(),
+            name text not null default 'Anonymous',
+            body text not null check (char_length(body) <= 1000),
+            created_at timestamptz not null default now()
+          );
+
+          alter table comments enable row level security;
+
+          create policy "public can read comments"
+            on comments for select using (true);
+
+          create policy "public can post comments"
+            on comments for insert with check (true);
+
+     3. Go to Project Settings → API. Copy the "Project URL" and the
+        "anon public" key (NOT the service_role key — that one must never
+        ship in client code).
+     4. Paste both into SUPABASE_URL / SUPABASE_ANON_KEY below, redeploy.
+
+   The anon key is designed to be public — it can only do what your RLS
+   policies above allow (read + insert), nothing else. Until both values
+   are filled in, the board quietly falls back to this browser's
+   localStorage only, so nothing is broken in the meantime. */
+
+const SUPABASE_URL = 'https://rytbipfbyyifaatuzdkg.supabase.co';        // e.g. 'https://abcdemoproj.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5dGJpcGZieXlpZmFhdHV6ZGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MjkzMzMsImV4cCI6MjA5OTQwNTMzM30.b6C8XEK16lf988mits_2SFDoDHkrlj91bSIuMGWRVio';   // Settings → API → "anon public" key
+const FORUM_KEY = 'whowins2029_forum_entries'; // local fallback only
+
+function backendConfigured(){
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
 
 function initForum(){
   const form = document.getElementById('forumForm');
   if (!form) return;
+
   renderComments();
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const nameEl = document.getElementById('cName');
     const bodyEl = document.getElementById('cBody');
     const anonEl = document.getElementById('cAnon');
     const status = document.getElementById('formStatus');
+    const btn = form.querySelector('button[type=submit]');
 
     const body = bodyEl.value.trim();
     if (!body){
@@ -145,22 +184,24 @@ function initForum(){
 
     const rawName = nameEl.value.trim();
     const name = (anonEl.checked || !rawName) ? 'Anonymous' : sanitize(rawName);
+    const entry = { name, body: sanitize(body), time: new Date().toISOString() };
 
-    const entry = {
-      name,
-      body: sanitize(body),
-      time: new Date().toISOString()
-    };
+    btn.disabled = true;
+    status.textContent = 'Posting…';
+    status.className = 'form-status';
 
-    const entries = loadEntries();
-    entries.unshift(entry);
-    saveEntries(entries);
+    const ok = await addEntry(entry);
 
     bodyEl.value = '';
     nameEl.value = '';
     anonEl.checked = false;
-    status.textContent = 'Posted — visible on this device.';
-    status.className = 'form-status ok';
+    btn.disabled = false;
+    status.textContent = ok
+      ? 'Posted — visible to everyone.'
+      : (backendConfigured()
+          ? 'Could not reach the shared board — saved locally instead.'
+          : 'Posted — visible on this device only (no shared backend configured yet).');
+    status.className = ok ? 'form-status ok' : 'form-status err';
     renderComments();
   });
 }
@@ -171,27 +212,68 @@ function sanitize(str){
   return div.innerHTML;
 }
 
-function loadEntries(){
-  try{
-    return JSON.parse(localStorage.getItem(FORUM_KEY)) || [];
-  } catch(e){
-    return [];
+async function loadEntries(){
+  if (backendConfigured()){
+    try{
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/comments?select=name,body,created_at&order=created_at.desc&limit=200`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if (res.ok){
+        const rows = await res.json();
+        return rows.map(r => ({ name: r.name, body: r.body, time: r.created_at }));
+      }
+      console.warn('Supabase responded with an error, falling back to local entries.', res.status);
+    } catch(e){
+      console.warn('Supabase unreachable, falling back to local entries.', e);
+    }
   }
+  return loadLocalEntries();
 }
 
-function saveEntries(entries){
+async function addEntry(entry){
+  if (backendConfigured()){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({ name: entry.name, body: entry.body })
+      });
+      if (res.ok) return true;
+      console.warn('Supabase insert failed, saving locally instead.', res.status);
+    } catch(e){
+      console.warn('Could not reach Supabase, saving locally instead.', e);
+    }
+  }
+  const local = loadLocalEntries();
+  local.unshift(entry);
+  saveLocalEntries(local);
+  return false;
+}
+
+function loadLocalEntries(){
+  try{ return JSON.parse(localStorage.getItem(FORUM_KEY)) || []; }
+  catch(e){ return []; }
+}
+function saveLocalEntries(entries){
   localStorage.setItem(FORUM_KEY, JSON.stringify(entries));
 }
 
-function renderComments(){
+async function renderComments(){
   const list = document.getElementById('commentList');
   const countEl = document.getElementById('forumCount');
   if (!list) return;
-  const entries = loadEntries();
-  countEl.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
+  const entries = await loadEntries();
+  countEl.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries') +
+    (backendConfigured() ? '' : ' (this device only)');
 
   if (!entries.length){
-    list.innerHTML = '<div class="comment-empty">No entries yet on this device — be the first.</div>';
+    list.innerHTML = '<div class="comment-empty">No entries yet — be the first.</div>';
     return;
   }
 
